@@ -10,7 +10,12 @@ const state = {
   isSearching: false,
   isLoadingCoins: true,
   isLoadingNews: true,
+  newsPage: 1,
+  hasMoreNews: true,
+  isLoadingMoreNews: false,
 };
+
+let feedObserver = null;
 
 const app = document.getElementById("app");
 
@@ -270,6 +275,18 @@ function renderFeed() {
     : getNews()
         .map((item) => renderNewsCard(item))
         .join("");
+        
+  const loadMoreBtn = (!state.isSearching && state.hasMoreNews && state.news.length > 0)
+    ? `
+      <div class="load-more-container load-more-trigger">
+        <div class="loading-state" style="padding: 20px;">
+          <span class="live-pulse"></span> Loading older news...
+        </div>
+      </div>
+    `
+    : (!state.hasMoreNews && !state.isSearching && state.news.length > 0) 
+      ? `<div class="end-of-feed">You've reached the end of the ledger.</div>`
+      : "";
 
   return `
     <div class="feed">
@@ -285,6 +302,7 @@ function renderFeed() {
         </form>
       </div>
       ${content}
+      ${loadMoreBtn}
     </div>
   `;
 }
@@ -462,6 +480,27 @@ function renderMain() {
   return renderMarket();
 }
 
+function setupInfiniteScroll() {
+  if (feedObserver) {
+    feedObserver.disconnect();
+  }
+
+  const trigger = document.querySelector('.load-more-trigger');
+  if (!trigger) return;
+
+  feedObserver = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      loadMoreNews();
+    }
+  }, {
+    root: null,
+    rootMargin: '200px', // trigger fetch 200px before reaching the bottom
+    threshold: 0
+  });
+
+  feedObserver.observe(trigger);
+}
+
 function renderApp() {
   syncViewAndTab();
   app.innerHTML = `
@@ -474,6 +513,10 @@ function renderApp() {
   `;
 
   document.body.style.overflow = state.activeCoinId ? "hidden" : "";
+  
+  if (state.view === "home" && state.tab === "feed") {
+    setTimeout(setupInfiniteScroll, 0);
+  }
 }
 
 function setView(view) {
@@ -519,9 +562,15 @@ async function loadInitialData() {
   }
 
   try {
-    const newsData = await fetchJson(`${API_BASE_URL}/api/news`);
-    if (newsData && Array.isArray(newsData.data) && newsData.data.length > 0) {
+    const newsData = await fetchJson(`${API_BASE_URL}/api/news?page=1&limit=10`);
+    if (newsData && Array.isArray(newsData.data)) {
       state.news = newsData.data;
+      state.newsPage = 1;
+      if (newsData.data.length < 10) {
+        state.hasMoreNews = false;
+      } else {
+        state.hasMoreNews = true;
+      }
     }
   } catch (error) {
     console.error(error);
@@ -546,6 +595,35 @@ async function runSearch() {
     console.error(error);
   } finally {
     state.isSearching = false;
+    renderApp();
+  }
+}
+
+async function loadMoreNews() {
+  if (state.isLoadingMoreNews || !state.hasMoreNews || state.isSearching) return;
+  
+  state.isLoadingMoreNews = true;
+  renderApp(); // show loading state on button
+
+  try {
+    const nextPage = state.newsPage + 1;
+    const newsData = await fetchJson(`${API_BASE_URL}/api/news?page=${nextPage}&limit=10`);
+    
+    if (newsData && Array.isArray(newsData.data)) {
+      if (newsData.data.length > 0) {
+        state.news = [...state.news, ...newsData.data];
+        state.newsPage = nextPage;
+      }
+      if (newsData.data.length < 10) {
+        state.hasMoreNews = false;
+      }
+    } else {
+      state.hasMoreNews = false;
+    }
+  } catch (error) {
+    console.error("Failed to load more news", error);
+  } finally {
+    state.isLoadingMoreNews = false;
     renderApp();
   }
 }
