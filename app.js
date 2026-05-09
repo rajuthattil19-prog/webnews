@@ -216,7 +216,7 @@ function renderNewsCard(item) {
   `;
 
   // Append a dummy query parameter to bypass Telegram's broken Instant View for CoinTelegraph
-  let safeLink = item.link || "";
+  let safeLink = item.short_link || "";
   if (safeLink) {
     try {
       const u = new URL(safeLink);
