@@ -80,6 +80,11 @@ button {
   animation: ticker-scroll linear infinite;
 }
 
+.ticker-track-static {
+  animation: none;
+  width: 100%;
+}
+
 .ticker-item {
   display: inline-flex;
   align-items: center;
@@ -90,6 +95,13 @@ button {
   font-size: 12px;
   letter-spacing: 0.02em;
   height: 38px;
+}
+
+.ticker-empty {
+  width: 100%;
+  border-right: none;
+  justify-content: center;
+  color: var(--fg-2);
 }
 
 .ticker-symbol {
@@ -456,6 +468,26 @@ button {
 
 .loading-state .live-pulse {
   margin-right: 8px;
+}
+
+.empty-state {
+  padding: 32px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.empty-state h2 {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.empty-state p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--fg-1);
 }
 
 .info {

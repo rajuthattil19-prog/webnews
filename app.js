@@ -1,160 +1,5 @@
 const API_BASE_URL = "https://kljnoiubpiuvb.vercel.app";
 
-const DEFAULT_COINS = [
-  {
-    id: "bitcoin",
-    symbol: "BTC",
-    name: "Bitcoin",
-    price_usd: 71240.55,
-    price_change_24h_pct: 2.41,
-    market_cap_usd: 1402000000000,
-    volume_24h_usd: 38400000000,
-    sentiment: "Mooning",
-    ai_sentiment_summary:
-      "BTC is flexing again - ETF inflows are stacking and whales are quietly accumulating. Vibes are bullish, but watch the $72k wall.",
-  },
-  {
-    id: "ethereum",
-    symbol: "ETH",
-    name: "Ethereum",
-    price_usd: 3812.12,
-    price_change_24h_pct: 1.18,
-    market_cap_usd: 458000000000,
-    volume_24h_usd: 17200000000,
-    sentiment: "Steady",
-    ai_sentiment_summary:
-      "ETH is moving sideways with conviction - staking flows look healthy, gas is calm. Not loud, but quietly setting up.",
-  },
-  {
-    id: "solana",
-    symbol: "SOL",
-    name: "Solana",
-    price_usd: 184.66,
-    price_change_24h_pct: 5.92,
-    market_cap_usd: 86000000000,
-    volume_24h_usd: 4900000000,
-    sentiment: "Heating Up",
-    ai_sentiment_summary:
-      "SOL is on fire today - meme volume and DEX flow are popping. Looks like rotation money is finally landing here.",
-  },
-  {
-    id: "xrp",
-    symbol: "XRP",
-    name: "XRP",
-    price_usd: 0.5215,
-    price_change_24h_pct: -1.42,
-    market_cap_usd: 28900000000,
-    volume_24h_usd: 1240000000,
-    sentiment: "Chilly",
-    ai_sentiment_summary:
-      "XRP is in cool-down mode. Ledger activity dipped and chatter went quiet - not bearish, just bored.",
-  },
-  {
-    id: "dogecoin",
-    symbol: "DOGE",
-    name: "Dogecoin",
-    price_usd: 0.1612,
-    price_change_24h_pct: 8.74,
-    market_cap_usd: 23100000000,
-    volume_24h_usd: 2100000000,
-    sentiment: "Mooning",
-    ai_sentiment_summary:
-      "DOGE is doing DOGE things - social mentions exploded after a single tweet. Fun while it lasts.",
-  },
-  {
-    id: "cardano",
-    symbol: "ADA",
-    name: "Cardano",
-    price_usd: 0.448,
-    price_change_24h_pct: -3.16,
-    market_cap_usd: 15800000000,
-    volume_24h_usd: 410000000,
-    sentiment: "Bleeding",
-    ai_sentiment_summary:
-      "ADA is leaking. No clear catalyst, just slow distribution. Probably one to watch, not chase.",
-  },
-  {
-    id: "chainlink",
-    symbol: "LINK",
-    name: "Chainlink",
-    price_usd: 17.92,
-    price_change_24h_pct: 4.05,
-    market_cap_usd: 10500000000,
-    volume_24h_usd: 620000000,
-    sentiment: "Heating Up",
-    ai_sentiment_summary:
-      "LINK is catching a real bid - RWA narrative + new partner integrations. Smart money seems early here.",
-  },
-];
-
-const DEFAULT_NEWS = [
-  {
-    id: "n1",
-    headline: "BlackRock Just Quietly Bought Another $400M of BTC - Nobody's Talking About It",
-    ai_summary:
-      "While Twitter is busy arguing about memecoins, BlackRock added another massive tranche of BTC to its ETF. The Lowdown: institutions are still loading the boat, and they're doing it on green candles - that's a confidence signal.",
-    source: "CoinDesk",
-    published_at: "2026-05-08T09:14:00Z",
-    category: "Institutional",
-    read_minutes: 3,
-    image_url:
-      "https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=1200&h=675&fit=crop",
-    related_symbols: ["BTC"],
-  },
-  {
-    id: "n2",
-    headline: "Solana Devs Ship a Fee Market Upgrade - Here's Why MEV Bots Are Sweating",
-    ai_summary:
-      "Solana's new local fee markets ship next week. Translation: spam transactions get priced out, real users pay less, and sandwich bots lose their edge. The Lowdown: this is bullish for UX, mildly bearish for some validator revenue.",
-    source: "The Block",
-    published_at: "2026-05-08T07:42:00Z",
-    category: "Tech",
-    read_minutes: 4,
-    image_url:
-      "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=1200&h=675&fit=crop",
-    related_symbols: ["SOL"],
-  },
-  {
-    id: "n3",
-    headline: "SEC Drops Case Against Major DeFi Protocol - Quiet Friday, Loud Implications",
-    ai_summary:
-      "The SEC walked away from a multi-year investigation into a DeFi front-end. The Lowdown: regulatory tone is shifting fast in 2026. DeFi tokens may be the most underpriced trade of the cycle if this pattern continues.",
-    source: "Bloomberg Crypto",
-    published_at: "2026-05-08T05:10:00Z",
-    category: "Regulation",
-    read_minutes: 5,
-    image_url:
-      "https://images.unsplash.com/photo-1633265486064-086b219458ec?w=1200&h=675&fit=crop",
-    related_symbols: ["ETH", "LINK"],
-  },
-  {
-    id: "n4",
-    headline: "Stablecoin Supply Just Hit an All-Time High - Dry Powder Is Loaded",
-    ai_summary:
-      "USDT + USDC combined supply quietly punched a new ATH. The Lowdown: that's $180B+ sitting on exchanges waiting to deploy. Historically this precedes a leg up, not down.",
-    source: "Glassnode",
-    published_at: "2026-05-07T22:58:00Z",
-    category: "On-chain",
-    read_minutes: 2,
-    image_url:
-      "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1200&h=675&fit=crop",
-    related_symbols: ["BTC", "ETH"],
-  },
-  {
-    id: "n5",
-    headline: "DOGE Social Volume Goes Vertical After a Single Tweet - Here We Go Again",
-    ai_summary:
-      "DOGE mentions are 11x their weekly average. The Lowdown: classic memecoin reflex. Fun trade, not an investment thesis. If you're playing, set an exit before you set an entry.",
-    source: "Santiment",
-    published_at: "2026-05-07T19:30:00Z",
-    category: "Memes",
-    read_minutes: 2,
-    image_url:
-      "https://images.unsplash.com/photo-1622630998477-20aa696ecb05?w=1200&h=675&fit=crop",
-    related_symbols: ["DOGE"],
-  },
-];
-
 const state = {
   view: "home",
   tab: "feed",
@@ -163,6 +8,8 @@ const state = {
   news: [],
   searchQuery: "",
   isSearching: false,
+  isLoadingCoins: true,
+  isLoadingNews: true,
 };
 
 const app = document.getElementById("app");
@@ -248,11 +95,11 @@ function syncViewAndTab() {
 }
 
 function getCoins() {
-  return state.coins.length > 0 ? state.coins : DEFAULT_COINS;
+  return state.coins;
 }
 
 function getNews() {
-  return state.news.length > 0 ? state.news : DEFAULT_NEWS;
+  return state.news;
 }
 
 function getActiveCoin() {
@@ -260,6 +107,18 @@ function getActiveCoin() {
 }
 
 function renderTicker(coins) {
+  if (coins.length === 0) {
+    return `
+      <div class="ticker" aria-label="Live market ticker">
+        <div class="ticker-track ticker-track-static">
+          <div class="ticker-item ticker-empty">
+            ${state.isLoadingCoins ? "Loading live market feed..." : "No live price data available."}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   const items = coins.concat(coins);
   const duration = `${Math.max(20, coins.length * 3)}s`;
 
@@ -384,6 +243,20 @@ function renderFeed() {
         Searching the database...
       </div>
     `
+    : state.isLoadingNews
+      ? `
+        <div class="loading-state">
+          <span class="live-pulse"></span>
+          Loading latest news...
+        </div>
+      `
+      : getNews().length === 0
+        ? `
+          <section class="empty-state">
+            <h2>No news in the database yet.</h2>
+            <p>Once the backend cron collects and summarizes articles, the feed will appear here.</p>
+          </section>
+        `
     : getNews()
         .map((item) => renderNewsCard(item))
         .join("");
@@ -407,6 +280,15 @@ function renderFeed() {
 }
 
 function renderMarket() {
+  if (getCoins().length === 0) {
+    return `
+      <section class="empty-state">
+        <h2>${state.isLoadingCoins ? "Loading market prices..." : "No market prices available."}</h2>
+        <p>${state.isLoadingCoins ? "Waiting for the backend to return live coin data." : "Seed or refresh Redis price data and this view will fill in automatically."}</p>
+      </section>
+    `;
+  }
+
   return `
     <section class="market">
       <div class="market-header">
@@ -618,20 +500,24 @@ async function loadInitialData() {
     const priceData = await fetchJson(`${API_BASE_URL}/api/prices`);
     if (priceData && Array.isArray(priceData.data) && priceData.data.length > 0) {
       state.coins = priceData.data;
-      renderApp();
     }
   } catch (error) {
     console.error(error);
+  } finally {
+    state.isLoadingCoins = false;
+    renderApp();
   }
 
   try {
     const newsData = await fetchJson(`${API_BASE_URL}/api/news`);
     if (newsData && Array.isArray(newsData.data) && newsData.data.length > 0) {
       state.news = newsData.data;
-      renderApp();
     }
   } catch (error) {
     console.error(error);
+  } finally {
+    state.isLoadingNews = false;
+    renderApp();
   }
 }
 
