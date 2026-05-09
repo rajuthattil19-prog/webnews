@@ -1,5 +1,14 @@
 const API_BASE_URL = "https://cryptweb.onrender.com";
 
+// ─── Telegram Mini App Detection ───
+const tg = window.Telegram?.WebApp || null;
+const tgUser = tg?.initDataUnsafe?.user || null;
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
+
 const state = {
   view: "home",
   tab: "feed",
@@ -13,6 +22,7 @@ const state = {
   newsPage: 1,
   hasMoreNews: true,
   isLoadingMoreNews: false,
+  telegramUser: tgUser,
 };
 
 let feedObserver = null;
@@ -358,12 +368,50 @@ function renderMarket() {
 }
 
 function renderProfile() {
+  const u = state.telegramUser;
+
+  const userCard = u
+    ? `
+      <div class="tg-profile-card">
+        <div class="tg-profile-avatar-wrap">
+          ${u.photo_url
+            ? `<img src="${escapeHtml(u.photo_url)}" alt="Profile" class="tg-profile-avatar" />`
+            : `<div class="tg-profile-avatar tg-profile-avatar-placeholder">${escapeHtml((u.first_name || "?")[0])}</div>`
+          }
+        </div>
+        <div class="tg-profile-name">${escapeHtml(u.first_name || "")}${u.last_name ? " " + escapeHtml(u.last_name) : ""}</div>
+        ${u.username ? `<div class="tg-profile-username">@${escapeHtml(u.username)}</div>` : ""}
+        <div class="tg-profile-details">
+          <div class="tg-detail-row">
+            <span class="lbl">User ID</span>
+            <span class="val">${escapeHtml(String(u.id))}</span>
+          </div>
+          ${u.language_code ? `
+          <div class="tg-detail-row">
+            <span class="lbl">Language</span>
+            <span class="val">${escapeHtml(u.language_code.toUpperCase())}</span>
+          </div>` : ""}
+          ${u.is_premium ? `
+          <div class="tg-detail-row">
+            <span class="lbl">Status</span>
+            <span class="val tg-premium">⭐ Premium</span>
+          </div>` : ""}
+        </div>
+      </div>
+    `
+    : `
+      <div class="tg-profile-card tg-profile-guest">
+        <div class="tg-profile-avatar-wrap">
+          <div class="tg-profile-avatar tg-profile-avatar-placeholder">👤</div>
+        </div>
+        <div class="tg-profile-name">Guest</div>
+        <div class="tg-profile-username">Open via Telegram for full profile</div>
+      </div>
+    `;
+
   return `
     <section class="info">
-      <div>
-        <h2>My Profile</h2>
-        <p>Welcome to your Ledger terminal.</p>
-      </div>
+      ${userCard}
       <div class="info-block">
         <div class="lbl">The Pitch</div>
         <p>News + on-chain + sentiment, distilled. No paywalls, no FUD, no shilling.</p>
@@ -380,6 +428,14 @@ function renderProfile() {
   `;
 }
 
+function formatSupply(value) {
+  if (!value || value === 0) return "N/A";
+  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `${(value / 1e6).toFixed(2)}M`;
+  return value.toLocaleString();
+}
+
 function renderModal() {
   const coin = getActiveCoin();
   if (!coin) {
@@ -389,6 +445,10 @@ function renderModal() {
   const change = Number(coin.price_change_24h_pct || 0);
   const arrow = change >= 0 ? "&#9650;" : "&#9660;";
   const sign = change >= 0 ? "+" : "";
+  const high24h = Number(coin.high_24h || 0);
+  const low24h = Number(coin.low_24h || 0);
+  const supply = Number(coin.circulating_supply || 0);
+  const description = coin.description || "";
 
   return `
     <div class="modal-backdrop" data-action="close-modal" role="dialog" aria-modal="true">
@@ -401,8 +461,15 @@ function renderModal() {
         </div>
 
         <div class="snapshot-hero">
-          <div class="snapshot-name">${escapeHtml(coin.name)}</div>
-          <div class="snapshot-symbol">${escapeHtml(coin.symbol)} / USD</div>
+          <div class="snapshot-hero-top">
+            ${coin.image
+              ? `<img src="${escapeHtml(coin.image)}" alt="${escapeHtml(coin.name)}" class="snapshot-coin-img" />`
+              : ""}
+            <div>
+              <div class="snapshot-name">${escapeHtml(coin.name)}</div>
+              <div class="snapshot-symbol">${escapeHtml(coin.symbol)} / USD</div>
+            </div>
+          </div>
           <div class="snapshot-price">$${formatPrice(Number(coin.price_usd || 0))}</div>
           <div class="snapshot-change ${change >= 0 ? "up" : "down"}">
             ${arrow} ${sign}${change.toFixed(2)}% &middot; 24h
@@ -419,14 +486,29 @@ function renderModal() {
             <div class="val">${formatBig(Number(coin.volume_24h_usd || 0))}</div>
           </div>
           <div class="snap-stat">
+            <div class="lbl">24h High</div>
+            <div class="val up">${high24h > 0 ? "$" + formatPrice(high24h) : "N/A"}</div>
+          </div>
+          <div class="snap-stat">
+            <div class="lbl">24h Low</div>
+            <div class="val down">${low24h > 0 ? "$" + formatPrice(low24h) : "N/A"}</div>
+          </div>
+          <div class="snap-stat">
+            <div class="lbl">Circulating Supply</div>
+            <div class="val">${formatSupply(supply)}</div>
+          </div>
+          <div class="snap-stat">
             <div class="lbl">Vibe</div>
             <div class="val ${trendClass(coin.sentiment)}">${escapeHtml(coin.sentiment)}</div>
           </div>
-          <div class="snap-stat">
-            <div class="lbl">Ticker</div>
-            <div class="val">${escapeHtml(coin.symbol)}</div>
-          </div>
         </div>
+
+        ${description ? `
+        <div class="snapshot-desc">
+          <div class="ai-label">About ${escapeHtml(coin.name)}</div>
+          <p class="snapshot-desc-text">${escapeHtml(description)}</p>
+        </div>
+        ` : ""}
 
         <div class="snapshot-ai">
           <div class="ai-box">
@@ -440,10 +522,14 @@ function renderModal() {
 }
 
 function renderBottomNav() {
+  const meIcon = state.telegramUser?.photo_url
+    ? `<img src="${escapeHtml(state.telegramUser.photo_url)}" alt="Me" class="tg-avatar" />`
+    : "\uD83D\uDC64";
+
   const items = [
     { id: "home", label: "Home", icon: "\u25A4" },
     { id: "market", label: "Market", icon: "\u25EB" },
-    { id: "me", label: "Me", icon: "\uD83D\uDC64" },
+    { id: "me", label: "Me", icon: meIcon },
   ];
 
   return `
