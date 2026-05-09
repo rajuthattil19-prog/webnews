@@ -200,6 +200,16 @@ function renderNewsCard(item) {
     <h2 class="news-headline">${escapeHtml(item.headline)}</h2>
   `;
 
+  // Append a dummy query parameter to bypass Telegram's broken Instant View for CoinTelegraph
+  let safeLink = item.link || "";
+  if (safeLink) {
+    try {
+      const u = new URL(safeLink);
+      u.searchParams.set("noiv", "1");
+      safeLink = u.toString();
+    } catch (e) {}
+  }
+
   return `
     <article class="news-card">
       <img
@@ -214,8 +224,8 @@ function renderNewsCard(item) {
         <span>&middot; ${escapeHtml(timeAgo(item.published_at))}</span>
       </div>
       ${
-        item.link
-          ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="news-headline-link">${headline}</a>`
+        safeLink
+          ? `<a href="${escapeHtml(safeLink)}" target="_blank" rel="noopener noreferrer" class="news-headline-link">${headline}</a>`
           : headline
       }
       <div class="ai-box">
@@ -226,8 +236,8 @@ function renderNewsCard(item) {
         <span>${symbols}</span>
         <span>${escapeHtml(item.read_minutes)} min read</span>
         ${
-          item.link
-            ? `<a href="${escapeHtml(item.link)}" target="_blank" rel="noopener noreferrer" class="news-read-link">Read full &#8599;</a>`
+          safeLink
+            ? `<a href="${escapeHtml(safeLink)}" target="_blank" rel="noopener noreferrer" class="news-read-link">Read full &#8599;</a>`
             : ""
         }
       </div>
