@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://kljnoiubpiuvb.vercel.app";
+const API_BASE_URL = "https://cryptweb.onrender.com";
 
 const state = {
   view: "home",
